@@ -1,0 +1,89 @@
+generate<-function(number,server=1){
+	result<-matrix(0,ncol=6,nrow=number)
+	result[,1]<-cumsum(runif(number))
+	result[,2]<-runif(number)
+	if(number<=server){result[,4]<-result[,2]+result[,1]}
+	else{
+		result[1:server,4]<-result[1:server,2]+result[1:server,1]
+		temp<-1:server
+		for(i in (server+1):number){
+			temp.end<-which(result[temp,4]==min(result[temp,4]))
+			result[i,5]<-result[temp[temp.end],4]
+			result[i,3]<-ifelse(result[i,5]>=result[i,1],result[i,5],result[i,1])
+			result[i,4]<-result[i,3]+result[i,2]
+			result[i,6]<-result[i,5]-result[i,1]
+			temp[temp.end]<-i
+		}
+	}
+	return(result)
+}
+waiting.mean<-function(table){
+	return(sum(table[which(table[,6]>0),6])/length(table[,6]))
+}
+spare.sum<-function(table,server=1){
+	return(-sum(table[which(table[,6]<0),6])/server)
+}
+queue<-function(table){
+	result<-c(0,0)
+	i<-1
+	j<-1
+	k<-1
+	while(i<=length(table[,1]) & j<=length(table[,1])){
+		while(i<=length(table[,1]) & table[i,1]<=table[j,5]){
+			if(i+j!=2){
+				result<-rbind(result,c(table[i,1],result[k,2]))
+				k<-k+1
+				result<-rbind(result,c(table[i,1],result[k,2]+1))
+				k<-k+1				
+			}
+			else{
+				result<-rbind(result,c(table[i,1],result[2]))
+				k<-k+1
+				result<-rbind(result,c(table[i,1],result[k,2]+1))
+				k<-k+1					
+			}
+			i<-i+1
+			if(i>length(table[,1])){
+				while(j<=length(table[,1])){
+					result<-rbind(result,c(table[j,5],result[k,2]))
+					k<-k+1
+					result<-rbind(result,c(table[j,5],result[k,2]-1))
+					k<-k+1				
+					j<-j+1
+				}
+				return(result)
+			}
+		}
+		while(j<=length(table[,1]) & table[i,1]>table[j,5]){
+			if(j+i!=2){
+				result<-rbind(result,c(table[j,5],result[k,2]))
+				k<-k+1
+				result<-rbind(result,c(table[j,5],result[k,2]-1))
+				k<-k+1				
+			}
+			else{
+				result<-rbind(result,c(table[j,5],result[2]))
+				k<-k+1
+				result<-rbind(result,c(table[j,5],result[k,2]-1))
+				k<-k+1				
+			}
+			j<-j+1
+			if(j>length(table[,1])){
+				while(i<=length(table[,1])){
+					result<-rbind(result,c(table[i,1],result[k,2]))
+					k<-k+1
+					result<-rbind(result,c(table[i,1],result[k,2]+1))
+					k<-k+1				
+					i<-i+1
+				}
+				return(result)
+			}
+		}
+	}
+	return(result)
+}
+record<-generate(1000,10)
+waiting.mean(record)
+spare.mean(record)
+que<-queue(record)
+plot(que[which(que[,2]>=0),],type='l')
