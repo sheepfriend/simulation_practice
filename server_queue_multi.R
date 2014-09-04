@@ -1,7 +1,7 @@
 generate<-function(number,server=1){
 	result<-matrix(0,ncol=6,nrow=number)
-	result[,1]<-cumsum(runif(number))
-	result[,2]<-runif(number)
+	result[,1]<-cumsum(rexp(number,rate=1))
+	result[,2]<-rexp(number,rate=2)
 	if(number<=server){result[,4]<-result[,2]+result[,1]}
 	else{
 		result[1:server,4]<-result[1:server,2]+result[1:server,1]
@@ -82,8 +82,11 @@ queue<-function(table){
 	}
 	return(result)
 }
-record<-generate(1000,10)
+que.mean<-function(x){
+	return(sum(x[which(x[,2]>0),2])/length(x[,1]))
+}
+record<-generate(1000,1)
 waiting.mean(record)
-spare.mean(record)
+spare.sum(record)
 que<-queue(record)
 plot(que[which(que[,2]>=0),],type='l')
